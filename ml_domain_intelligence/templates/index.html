@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Security Analyzer</title>
+    <style>
+        :root {
+            --primary: #9333ea;
+            --primary-hover: #a855f7;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --warning: #eab308;
+            --background: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            padding: 2rem;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: var(--text);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .header h2 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+        }
+
+        .input-section {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            background: var(--primary);
+            color: var(--text);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        button:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            display: none;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .result-card h3 {
+            color: var(--text);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .chart-card h4 {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .chart-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 0.25rem;
+        }
+
+        .insights-list {
+            list-style: none;
+        }
+
+        .insights-list li {
+            margin-bottom: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: var(--background);
+        }
+
+        .insights-list li.danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .insights-list li.warning {
+            background: rgba(234, 179, 8, 0.2);
+            color: var(--warning);
+        }
+
+        .insights-list li.success {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+
+        .url-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .url-table th,
+        .url-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .url-table th {
+            background: var(--background);
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+
+        .error-message {
+            display: none;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Rest of the HTML remains the same -->
+    <div class="container">
+        <div class="header">
+            <h1>ML-Based Domain Intelligence Engine</h1>
+            <h2>A part of Deep Domain Analyses</h2>
+            <p>Enter a domain, IP, or URL to analyze its security profile in real- Time</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input
+                    type="text"
+                    id="urlInput"
+                    placeholder="Enter domain (e.g., example.com)"
+                    autocomplete="off"
+                />
+                <button onclick="analyzeUrl()" id="analyzeButton">Analyze</button>
+            </div>
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Analyzing URL... Please wait</p>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="result-card">
+                <h3>Insights</h3>
+                <ul class="insights-list" id="insightsList"></ul>
+            </div>
+
+            <div class="result-card">
+                <h3>Analysis Results</h3>
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h4>Category Distribution (Pie Chart)</h4>
+                        <img src="" alt="URL Categories Pie Chart" id="pieChart" />
+                    </div>
+                    <div class="chart-card">
+                        <h4>Category Distribution (Bar Chart)</h4>
+                        <img src="" alt="URL Categories Bar Chart" id="barChart" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-card">
+                <h3>URL Classification</h3>
+                <div class="table-container">
+                    <table class="url-table">
+                        <thead>
+                            <tr>
+                                <th>URL</th>
+                                <th>Category</th>
+                            </tr>
+                        </thead>
+                        <tbody id="urlTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // JavaScript remains the same as it handles functionality rather than styling
+        const analyzeButton = document.getElementById('analyzeButton');
+        const errorMessage = document.getElementById('errorMessage');
+
+        async function analyzeUrl() {
+            const urlInput = document.getElementById('urlInput').value.trim();
+
+            errorMessage.style.display = 'none';
+            errorMessage.textContent = '';
+
+            if (!urlInput) {
+                showError('Please enter a URL to analyze');
+                return;
+            }
+
+            analyzeButton.disabled = true;
+            document.querySelector('.loading').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: urlInput })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Analysis failed');
+                }
+
+                document.getElementById('resultsSection').style.display = 'block';
+
+                if (data.charts) {
+                    document.getElementById('pieChart').src = `data:image/png;base64,${data.charts.pie_chart}`;
+                    document.getElementById('barChart').src = `data:image/png;base64,${data.charts.bar_chart}`;
+                }
+
+                const insightsList = document.getElementById('insightsList');
+                insightsList.innerHTML = '';
+
+                if (data.insights) {
+                    data.insights.forEach(insight => {
+                        const li = document.createElement('li');
+                        li.textContent = insight;
+
+                        if (insight.includes('🚨')) {
+                            li.className = 'danger';
+                        } else if (insight.includes('⚠️')) {
+                            li.className = 'warning';
+                        } else if (insight.includes('✅')) {
+                            li.className = 'success';
+                        }
+
+                        insightsList.appendChild(li);
+                    });
+                }
+
+                const urlTableBody = document.getElementById('urlTableBody');
+                urlTableBody.innerHTML = '';
+
+                if (data.url_classification) {
+                    data.url_classification.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${escapeHtml(item.URL)}</td>
+                            <td>${escapeHtml(item.Category)}</td>
+                        `;
+                        urlTableBody.appendChild(row);
+                    });
+                }
+
+            } catch (error) {
+                showError(error.message || 'Error analyzing URL. Please try again.');
+                document.getElementById('resultsSection').style.display = 'none';
+            } finally {
+                analyzeButton.disabled = false;
+                document.querySelector('.loading').style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.getElementById('urlInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                analyzeUrl();
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
